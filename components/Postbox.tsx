@@ -114,10 +114,8 @@ function Postbox({ subreddit }: Props) {
         <LinkIcon className={`h-6 text-gray-300`} />
       </div>
 
-      {/* Dropdown */}
       {!!watch("postTitle") && (
         <div className="flex flex-col pt-2">
-          {/* Body */}
           <div className="flex items-center pl-2">
             <p className="min-w-[90px]">Body:</p>
             <input

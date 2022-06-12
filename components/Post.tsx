@@ -33,7 +33,7 @@ function Post({ post }: Props) {
           <p className="text-xs text-gray-500">
             <Link href={`/subreddit/${post.subreddit[0]?.topic}`}>
               <span className="font-bold text-black hover:text-blue-400 hover:underline">
-                {post.subreddit[0]?.topic}
+                r/{post.subreddit[0]?.topic}
               </span>
             </Link>{" "}
             Posted by {post.username} {""}
