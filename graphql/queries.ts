@@ -3,9 +3,9 @@ import { gql } from "@apollo/client";
 export const GET_SUBREDDIT_BY_TOPIC = gql`
   query MyQuery($topic: String!) {
     getSubredditByTopic(topic: $topic) {
+      created_at
       id
       topic
-      created_at
     }
   }
 `;
@@ -13,31 +13,31 @@ export const GET_SUBREDDIT_BY_TOPIC = gql`
 export const GET_ALL_POSTS = gql`
   query MyQuery {
     getPostList {
-      body
       created_at
       id
-      image
+      body
       title
-      subreddit_id
       username
-      commentList {
-        created_at
+      image
+      subreddit_id
+      votes {
         id
-        post_id
-        text
-        username
-      }
-      subreddit {
-        created_at
-        id
-        topic
-      }
-      voteList {
-        created_at
-        id
-        post_id
         upvote
         username
+        created_at
+        post_id
+      }
+      comments {
+        text
+        username
+        created_at
+        id
+        post_id
+      }
+      subreddit {
+        id
+        topic
+        created_at
       }
     }
   }
@@ -45,31 +45,31 @@ export const GET_ALL_POSTS = gql`
 export const GET_ALL_POSTS_BY_TOPIC = gql`
   query MyQuery($topic: String!) {
     getPostListByTopic(topic: $topic) {
-      body
       created_at
       id
-      image
+      body
       title
-      subreddit_id
       username
-      commentList {
-        created_at
+      image
+      subreddit_id
+      votes {
         id
-        post_id
-        text
-        username
-      }
-      subreddit {
-        created_at
-        id
-        topic
-      }
-      voteList {
-        created_at
-        id
-        post_id
         upvote
         username
+        created_at
+        post_id
+      }
+      comments {
+        text
+        username
+        created_at
+        id
+        post_id
+      }
+      subreddit {
+        id
+        topic
+        created_at
       }
     }
   }

@@ -1,34 +1,34 @@
-type Comments = {
+type Post = {
+  id: number;
+  body: string;
+  image: string;
+  title: string;
+  username: string;
+  subreddit_id: number;
   created_at: string;
+  votes: Vote[];
+  comments: Comment[];
+  subreddit: Subreddit[];
+};
+
+type Comments = {
   id: number;
   post_id: number;
   text: string;
   username: string;
+  created_at: string;
 };
 
 type Vote = {
-  created_at: string;
   id: number;
   post_id: number;
   upvote: boolean;
   username: string;
+  created_at: string;
 };
 
 type Subreddit = {
   created_at: string;
   id: number;
   topic: string;
-};
-
-type Post = {
-  body: string;
-  created_at: string;
-  id: number;
-  image: string;
-  subreddit_id: number;
-  title: string;
-  username: string;
-  voteList: Vote[];
-  commentList: Comments[];
-  subreddit: Subreddit;
 };
