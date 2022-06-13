@@ -74,38 +74,39 @@ export const GET_ALL_POSTS_BY_TOPIC = gql`
     }
   }
 `;
-export const GET_POST_BY_ID = gql`
-  query MyQuery($id: ID!) {
-    getPost(id: $id) {
-      body
-      created_at
+export const GET_POST_BY_POST_ID = gql`
+  query MyQuery($post_id: ID!) {
+    getPostListByPostId(post_id: $post_id) {
       id
-      image
       title
+      image
       subreddit_id
+      created_at
       username
-      commentList {
-        created_at
+      body
+      comments {
         id
-        post_id
-        text
+        created_at
         username
+        text
+        post_id
       }
       subreddit {
-        created_at
         id
+        created_at
         topic
       }
-      voteList {
-        created_at
+      votes {
         id
-        post_id
-        upvote
         username
+        upvote
+        post_id
+        created_at
       }
     }
   }
 `;
+
 export const GET_ALL_VOTES_BY_POST_ID = gql`
   query MyQuery($post_id: ID!) {
     getVotesByPostId(post_id: $post_id) {
