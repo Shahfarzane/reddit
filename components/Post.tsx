@@ -62,6 +62,10 @@ function Post({ post }: Props) {
           <div className="footer flex space-x-4 text-gray-400">
             <div className="postButton">
               <ChatIcon className="h-6 w-6" />
+
+              <p className="hidden sm:inline">
+                {post.comments.length} Comments
+              </p>
             </div>
             <div className="postButton">
               <GiftIcon className="h-6 w-6" />

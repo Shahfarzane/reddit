@@ -7,7 +7,7 @@ type Post = {
   subreddit_id: number;
   created_at: string;
   votes: Vote[];
-  comments: Comment[];
+  comments: Comments[];
   subreddit: Subreddit[];
 };
 
