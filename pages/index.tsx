@@ -23,8 +23,8 @@ const Home: NextPage = () => {
       <PostBox />
       <div className="flex">
         <Feed />
-        <div className="top-36mx-5 sticky mt-5 hidden h-fit min-w-[200px] rounded-md border border-gray-300 bg-white lg:inline">
-          <p className="text-md mb-1 p-2 pb-2 font-bold">Top Communitites</p>
+        <div className="top-36 mx-5 sticky mt-5 hidden h-fit min-w-[300px] rounded-md border border-gray-300 bg-white lg:inline">
+          <p className="text-md mb-1 p-4 pb-3 font-bold">Top Communitites</p>
           <div>
             {subreddits?.map((subreddit, index) => (
               <SubRedditRow
