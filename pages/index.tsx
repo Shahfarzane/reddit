@@ -1,21 +1,41 @@
-import { ChevronDownIcon } from "@heroicons/react/solid";
-import type { NextPage } from "next";
 import Head from "next/head";
-import Image from "next/image";
+import type { NextPage } from "next";
+import PostBox from "../components/Postbox";
 import Feed from "../components/Feed";
-import Header from "../components/Header";
-import Postbox from "../components/Postbox";
+import { GET_SUBREDDITS_WITH_LIMIT } from "../graphql/queries";
+import { useQuery } from "@apollo/client";
+import SubRedditRow from "../components/SubRedditRow";
 
 const Home: NextPage = () => {
+  const { data } = useQuery(GET_SUBREDDITS_WITH_LIMIT, {
+    variables: {
+      limit: 10,
+    },
+  });
+  const subreddits: Subreddit[] = data?.getSubredditListLimit;
+
   return (
-    <div className="max-w-5xl my-7 mx-auto">
+    <div className="my-7 mx-auto max-w-5xl">
       <Head>
-        <title>Reddit Clone by Shahin F</title>
+        <title>Reddit Clone</title>
         <link rel="icon" href="/favicon.ico" />
       </Head>
-      <Postbox />
-
-      <Feed />
+      <PostBox />
+      <div className="flex">
+        <Feed />
+        <div className="top-36mx-5 sticky mt-5 hidden h-fit min-w-[200px] rounded-md border border-gray-300 bg-white lg:inline">
+          <p className="text-md mb-1 p-2 pb-2 font-bold">Top Communitites</p>
+          <div>
+            {subreddits?.map((subreddit, index) => (
+              <SubRedditRow
+                key={subreddit.id}
+                topic={subreddit.topic}
+                index={index}
+              />
+            ))}
+          </div>
+        </div>
+      </div>
     </div>
   );
 };

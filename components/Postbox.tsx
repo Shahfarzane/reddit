@@ -1,13 +1,14 @@
-import { LinkIcon, PhotographIcon } from "@heroicons/react/outline";
-import { useSession } from "next-auth/react";
-import React, { useState } from "react";
-import Avatar from "./Avatar";
-import { useForm } from "react-hook-form";
-import { useMutation } from "@apollo/client";
 import { ADD_POST, ADD_SUBREDDIT } from "../graphql/mutations";
-import client from "../apollo-client";
+import { LinkIcon, PhotographIcon } from "@heroicons/react/outline";
+import { useMutation, useQuery } from "@apollo/client";
+
+import Avatar from "./Avatar";
 import { GET_ALL_POSTS, GET_SUBREDDIT_BY_TOPIC } from "../graphql/queries";
-import { toast } from "react-hot-toast";
+import client from "../apollo-client";
+import { useForm } from "react-hook-form";
+import { useSession } from "next-auth/react";
+import { useState } from "react";
+import toast from "react-hot-toast";
 
 type FormData = {
   postTitle: string;
@@ -18,13 +19,13 @@ type FormData = {
 type Props = {
   subreddit?: string;
 };
-function Postbox({ subreddit }: Props) {
+const PostBox = ({ subreddit }: Props) => {
   const { data: session } = useSession();
+  const [imageBoxOpen, setImageBoxOpen] = useState(false);
   const [addPost] = useMutation(ADD_POST, {
     refetchQueries: [GET_ALL_POSTS, "getPostList"],
   });
   const [addSubreddit] = useMutation(ADD_SUBREDDIT);
-  const [imageBoxOpen, setImageBoxOpen] = useState<boolean>(false);
   const {
     register,
     setValue,
@@ -33,22 +34,19 @@ function Postbox({ subreddit }: Props) {
     formState: { errors },
   } = useForm<FormData>();
   const onSubmit = handleSubmit(async (formData) => {
-    console.log("formData", formData);
-    const notification = toast.loading("creating new post...");
+    const notification = toast.loading("Creating new post...");
     try {
-      // Query for the subreddit topic...
       const {
-        data: { getSubredditByTopic },
+        data: { getSubredditListByTopic },
       } = await client.query({
         query: GET_SUBREDDIT_BY_TOPIC,
         variables: {
-          topic: subreddit || formData.subreddit,
+          topic: formData.subreddit,
         },
       });
-      const subredditExists = getSubredditByTopic.length > 0;
+      const subredditExists = getSubredditListByTopic.length > 0;
       if (!subredditExists) {
-        // create new subreddit...
-        console.log("Creating a NEW subreddit...");
+        //create
         const {
           data: { insertSubreddit: newSubreddit },
         } = await addSubreddit({
@@ -56,112 +54,127 @@ function Postbox({ subreddit }: Props) {
             topic: subreddit || formData.subreddit,
           },
         });
-        console.log(newSubreddit);
-        var subreddit_id = newSubreddit.id;
-      } else var subreddit_id = getSubredditByTopic[0].id;
-      console.log(subreddit_id);
-      const image = formData.postImage || "";
 
-      const {
-        data: { insertPost: newPost },
-      } = await addPost({
-        variables: {
-          body: formData.postBody,
-          image: image,
-          subreddit_id: subreddit_id,
-          title: formData.postTitle,
-          username: session?.user?.name,
-        },
-      });
-      console.log("new post added:", newPost);
+        const image = formData.postImage || "";
+        const {
+          data: { insertPost: newPost },
+        } = await addPost({
+          variables: {
+            body: formData.postBody,
+            image: image,
+            subreddit_id: newSubreddit.id,
+            title: formData.postTitle,
+            username: session?.user?.name,
+          },
+        });
+      } else {
+        //use existing
+
+        const image = formData.postImage || "";
+        const {
+          data: { insertPost },
+        } = await addPost({
+          variables: {
+            body: formData.postBody,
+            image: image,
+            subreddit_id: getSubredditListByTopic[0].id,
+            title: formData.postTitle,
+            username: session?.user?.name,
+          },
+        });
+      }
       setValue("postBody", "");
-      setValue("postTitle", "");
       setValue("postImage", "");
+      setValue("postTitle", "");
       setValue("subreddit", "");
-      toast.success("New post created", { id: notification });
+      toast.success("New Post Created", {
+        id: notification,
+      });
     } catch (error) {
-      toast.error("Whoops something went wrong", { id: notification });
-      console.log(error);
+      toast.error("Whoops something went wrong", {
+        id: notification,
+      });
     }
   });
-
   return (
     <form
       onSubmit={onSubmit}
-      className="sticky top-20 z-50 rounded-md border border-gray-300 bg-white p-2"
+      className="broder-gray-300 sticky top-16 z-50 rounded-md border bg-white p-2"
     >
       <div className="flex items-center space-x-3">
-        <Avatar />
+        <Avatar seed="sonny" large />
+
         <input
           {...register("postTitle", { required: true })}
-          disabled={!session}
-          className="flex-1 rounded-md bg-gray-50 p-2 pl-5 outline-none"
           type="text"
           placeholder={
             session
               ? subreddit
                 ? `Create a post in r/${subreddit}`
-                : "Create a post by entering a title!"
-              : "Sign in to post"
+                : "Create a post by entering a title"
+              : "Sign in to Post"
           }
+          disabled={!session}
+          className="flex-1 rounded-md bg-gray-50 p-2 pl-5 outline-none"
         />
         <PhotographIcon
+          onClick={() => setImageBoxOpen(!imageBoxOpen)}
           className={`h-6 cursor-pointer text-gray-300 ${
             imageBoxOpen && "text-blue-300"
           }`}
-          onClick={() => setImageBoxOpen(!imageBoxOpen)}
         />
-        <LinkIcon className={`h-6 text-gray-300`} />
+        <LinkIcon className="h-6 text-gray-300" />
       </div>
-
       {!!watch("postTitle") && (
-        <div className="flex flex-col pt-2">
-          <div className="flex items-center pl-2">
+        <div className="flex flex-col py-2">
+          {/**Body */}
+          <div className="flex items-center px-2">
             <p className="min-w-[90px]">Body:</p>
             <input
-              className="m-2 mr-0 flex-1 rounded-md bg-blue-50 px-2 outline-none"
-              {...register("postBody")}
               type="text"
+              className="m-2 flex-1 bg-blue-50 outline-none"
               placeholder="Text (optional)"
+              {...register("postBody")}
             />
           </div>
           {!subreddit && (
-            <div className="flex items-center pl-2">
-              <p className="min-w-[90px]">Subreddit:</p>
+            <div className="flex items-center px-2">
+              <p className="min-w-[90px]">SubReddit:</p>
               <input
-                className="m-2 mr-0 flex-1 rounded-md bg-blue-50 px-2 outline-none"
+                type="text"
+                className="m-2 flex-1 bg-blue-50 outline-none"
+                placeholder="i.e. reactjs"
                 {...register("subreddit", { required: true })}
-                type="text"
-                placeholder="i.e reactjs"
               />
             </div>
           )}
+
           {imageBoxOpen && (
-            <div className="flex items-center pl-2">
-              <p className="min-w-[90px]">Image URL:</p>
+            <div className="flex items-center px-2">
+              <p className="min-w-[90px]">SubReddit:</p>
               <input
-                className="m-2  mr-0 flex-1 rounded-md bg-blue-50 px-2 outline-none"
-                {...register("postImage")}
                 type="text"
+                className="m-2 flex-1 bg-blue-50 outline-none"
                 placeholder="Optional..."
+                {...register("postImage")}
               />
             </div>
           )}
-          {/* Errors */}
+          {/**Errors */}
           {Object.keys(errors).length > 0 && (
             <div className="space-y-2 p-2 text-red-500">
               {errors.postTitle?.type === "required" && (
-                <p>- A post title is required</p>
+                <p>Post Ttile is required</p>
               )}
               {errors.subreddit?.type === "required" && (
-                <p>- A subreddit is required</p>
+                <p>Subreddit is required</p>
               )}
             </div>
           )}
           {!!watch("postTitle") && (
             <button
               type="submit"
-              className="w-full rounded-lg bg-blue-400 p-2 text-white"
+              className="w-full rounded-full bg-blue-400 p-2 text-white"
             >
               Create Post
             </button>
@@ -170,6 +183,6 @@ function Postbox({ subreddit }: Props) {
       )}
     </form>
   );
-}
+};
 
-export default Postbox;
+export default PostBox;

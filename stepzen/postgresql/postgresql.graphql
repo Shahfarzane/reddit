@@ -5,7 +5,6 @@ type Comment {
   text: String
   username: String
 }
-
 type Post {
   body: String
   created_at: DateTime
@@ -21,7 +20,7 @@ type Post {
     )
   comments: [Comment]
     @materializer(
-      query: "getCommentsByPostId"
+      query: "getCommentByPostId"
       arguments: [{ name: "post_id", field: "id" }]
     )
   subreddit: [Subreddit]
@@ -30,7 +29,6 @@ type Post {
       arguments: [{ name: "id", field: "subreddit_id" }]
     )
 }
-
 type Subreddit {
   created_at: DateTime
   id: ID!
@@ -41,7 +39,7 @@ type Vote {
   created_at: DateTime
   id: ID!
   post_id: ID
-  upvote: Int
+  upvote: Boolean
   username: String
 }
 
@@ -56,6 +54,23 @@ type Query {
   """
   This query is an example of how to simply paginate your responses.
   """
+  getVotesByPostId(post_id: ID!): [Vote]
+    @dbquery(
+      type: "postgresql"
+      query: """
+       select * from "vote" where "post_id" = $1
+      order by "created_at" desc
+      """
+      configuration: "postgresql_config"
+    )
+  getSubredditListById(id: ID!): [Subreddit]
+    @dbquery(
+      type: "postgresql"
+      query: """
+      select * from "subreddit" where "id" = $1
+      """
+      configuration: "postgresql_config"
+    )
   getPaginatedCommentList(first: Int!, after: Int!): [Comment]
     @dbquery(
       type: "postgresql"
@@ -76,6 +91,30 @@ type Query {
       """
       configuration: "postgresql_config"
     )
+  getCommentByPostId(post_id: ID!): [Comment]
+    @dbquery(
+      type: "postgresql"
+      query: """
+      select * from "comment" where "post_id" = $1
+      """
+      configuration: "postgresql_config"
+    )
+  getPostListByPostId(post_id: ID!): Post
+    @dbquery(
+      type: "postgresql"
+      query: """
+      select * from "post" where "post"."id" = $1
+      """
+      configuration: "postgresql_config"
+    )
+  getSubredditListLimit(limit: Int!): [Subreddit]
+    @dbquery(
+      type: "postgresql"
+      query: """
+      select * from "subreddit" order by "created_at" desc limit $1
+      """
+      configuration: "postgresql_config"
+    )
   """
   In this example, two query parameters are passed. If the request to the DB will
   return at most one value you can remove the square brackets from the result.
@@ -92,17 +131,8 @@ type Query {
     @dbquery(
       type: "postgresql"
       query: """
-      select * from "public"."post" as "post" order by "post"."created_at" desc
-      """
-      configuration: "postgresql_config"
-    )
-
-  getPostListByPostId(post_id: ID!): Post
-    @dbquery(
-      type: "postgresql"
-      query: """
-      SELECT * FROM "post"
-      WHERE "post"."id" = $1
+       select * from "post"
+      order by "post"."created_at" desc
       """
       configuration: "postgresql_config"
     )
@@ -110,8 +140,10 @@ type Query {
     @dbquery(
       type: "postgresql"
       query: """
-      select *, "post".id as id from "public"."post" as "post"
-      join "public"."subreddit" on "public"."subreddit".id = "post"."subreddit_id" where "public"."subreddit"."topic" = $1 order by "post"."created_at" desc
+      select *, "post".id as id from "post"
+      join "subreddit" on "subreddit"."id" = "post"."subreddit_id"
+      where "subreddit"."topic" = $1
+      order by "post"."created_at" desc
       """
       configuration: "postgresql_config"
     )
@@ -122,22 +154,12 @@ type Query {
       table: "subreddit"
       configuration: "postgresql_config"
     )
-  getSubredditByTopic(topic: String!): [Subreddit]
-    @dbquery(
-      type: "postgresql"
-      schema: "public"
-      query: """
-      SELECT * FROM "subreddit" WHERE "topic" = $1
-      """
-      configuration: "postgresql_config"
-    )
-  getSubredditListById(id: ID!): [Subreddit]
+  getSubredditListByTopic(topic: String!): [Subreddit]
     @dbquery(
       type: "postgresql"
       query: """
-      select * from "public"."subreddit" where "id" = $1
+      select * from "subreddit"  where "topic" = $1
       """
-      table: "subreddit"
       configuration: "postgresql_config"
     )
   getVoteList: [Vote]
@@ -145,24 +167,6 @@ type Query {
       type: "postgresql"
       schema: "public"
       table: "vote"
-      configuration: "postgresql_config"
-    )
-  getVotesByPostId(id: ID!): [Vote]
-    @dbquery(
-      type: "postgresql"
-      query: """
-      select * from "public"."vote" where "post_id" = $1
-      """
-      table: "vote"
-      configuration: "postgresql_config"
-    )
-  getCommentsByPostId(id: ID!): [Comment]
-    @dbquery(
-      type: "postgresql"
-      query: """
-      select * from "public"."comment" where "post_id" = $1
-      """
-      table: "comment"
       configuration: "postgresql_config"
     )
 }
@@ -187,12 +191,10 @@ type Mutation {
   insertSubreddit(topic: String!): Subreddit
     @dbquery(
       type: "postgresql"
-      schema: "public"
       table: "subreddit"
       dml: INSERT
       configuration: "postgresql_config"
     )
-
   insertComment(post_id: ID!, username: String!, text: String!): Comment
     @dbquery(
       type: "postgresql"
@@ -200,10 +202,16 @@ type Mutation {
       dml: INSERT
       configuration: "postgresql_config"
     )
-
   """
   In this mutation example you can see how to do a mutation to delete data from the database.
   """
+  insertVote(post_id: ID!, username: String!, upvote: Boolean!): Vote
+    @dbquery(
+      type: "postgresql"
+      table: "vote"
+      dml: INSERT
+      configuration: "postgresql_config"
+    )
   deletePost(
     image: String!
     id: ID!

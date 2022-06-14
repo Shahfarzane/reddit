@@ -2,7 +2,7 @@ import { useRouter } from "next/router";
 import React from "react";
 import Avatar from "../../components/Avatar";
 import Feed from "../../components/Feed";
-import Postbox from "../../components/Postbox";
+import PostBox from "../../components/Postbox";
 
 function Subreddit() {
   const {
@@ -24,7 +24,7 @@ function Subreddit() {
         </div>
       </div>
       <div className="mx-auto mt-5 max-w-5xl pb-10">
-        <Postbox subreddit={topic as string} />
+        <PostBox subreddit={topic as string} />
         <Feed topic={topic as string} />
       </div>
     </div>

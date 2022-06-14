@@ -1,31 +1,19 @@
 import { useMutation, useQuery } from "@apollo/client";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/router";
-import React from "react";
-import Post from "../../components/Post";
-import { GET_POST_BY_POST_ID } from "../../graphql/queries";
-import { useForm, SubmitHandler } from "react-hook-form";
-import { ADD_COMMENT } from "../../graphql/mutations";
+import { SubmitHandler, useForm } from "react-hook-form";
 import toast from "react-hot-toast";
-import Avatar from "../../components/Avatar";
 import ReactTimeago from "react-timeago";
+import Avatar from "../../components/Avatar";
+import Post from "../../components/Post";
+import { ADD_COMMENT } from "../../graphql/mutations";
+import { GET_POST_BY_POST_ID } from "../../graphql/queries";
 
 type FormData = {
   comment: string;
 };
-
-function PostPage() {
+const PostPage = () => {
   const router = useRouter();
-  const { data: session } = useSession();
-  const { data } = useQuery(GET_POST_BY_POST_ID, {
-    variables: {
-      post_id: router.query.postId,
-    },
-  });
-
-  const [addComment] = useMutation(ADD_COMMENT, {
-    refetchQueries: [GET_POST_BY_POST_ID, "getPostListByPostId"],
-  });
   const {
     register,
     handleSubmit,
@@ -33,8 +21,22 @@ function PostPage() {
     setValue,
     formState: { errors },
   } = useForm<FormData>();
+  const { data, error, loading } = useQuery(GET_POST_BY_POST_ID, {
+    variables: {
+      post_id: router.query.postId,
+    },
+  });
+  const [addComment] = useMutation(ADD_COMMENT, {
+    refetchQueries: [GET_POST_BY_POST_ID, "getPostListByPostId"],
+  });
+  const singlepost = data?.getPostListByPostId;
+
+  const { data: session } = useSession();
+
   const onSubmit: SubmitHandler<FormData> = async (data) => {
-    const notification = toast.loading("Posting comment...");
+    //post comment
+
+    const notification = toast.loading("Posting your comment...");
     await addComment({
       variables: {
         post_id: router.query.postId,
@@ -42,32 +44,34 @@ function PostPage() {
         text: data.comment,
       },
     });
-
     setValue("comment", "");
-    toast.success("Comment added successfully", { id: notification });
+    toast.success("Comment Successfully Added", {
+      id: notification,
+    });
   };
 
-  const post: Post = data?.getPostListByPostId;
-
   return (
-    <div>
-      <Post post={post} />
-      <div className="rounded-b-md border border-t-0 border-gray-300 bg-white p-5 pl-16 -mt-1">
+    <div className="mx-auto my-7 max-w-5xl">
+      <Post post={singlepost} />
+      <div className="-mt-1 rounded-b-md border border-t-0 border-gray-300 bg-white p-5 pl-16">
         <p className="text-sm">
-          Comment as <span className="text-red-500">{session?.user?.name}</span>
+          Comments as
+          <span className="text-red-500">{session?.user?.name}</span>
         </p>
-
         <form
           onSubmit={handleSubmit(onSubmit)}
           className="flex flex-col space-y-2"
         >
           <textarea
-            {...register("comment")}
             disabled={!session}
+            {...register("comment")}
             className="h-24 rounded-md border border-gray-200 p-2 pl-4 outline-none disabled:bg-gray-50"
-            placeholder={session ? "what are your thoughts?" : "Please Sign in"}
+            placeholder={
+              session ? "What are your thoughts" : "Please sign in to comment"
+            }
           />
           <button
+            disabled={!session}
             type="submit"
             className="rounded-full bg-red-500 p-3 font-semibold text-white disabled:bg-gray-200"
           >
@@ -77,7 +81,8 @@ function PostPage() {
       </div>
       <div className="-my-5 rounded-b-md border border-t-0 border-gray-300 bg-white py-5 px-10">
         <hr className="py-2" />
-        {post?.comments?.map((comment: any) => {
+        {singlepost?.comments?.map((comment: any) => {
+          if (!comment) return;
           return (
             <div
               className="relative flex items-center space-x-2 space-y-5"
@@ -102,6 +107,6 @@ function PostPage() {
       </div>
     </div>
   );
-}
+};
 
 export default PostPage;
